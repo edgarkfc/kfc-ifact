@@ -5,12 +5,6 @@ from server.controllers.bills_controller import armar_factura
 import logging
 from datetime import datetime
 
-# Importar validadores
-from server.controllers.helpers.validators import (
-    FacturaSchema,    
-    FormaPagoSchema
-)
-
 # Configurar logger
 logger = logging.getLogger(__name__)
 
@@ -30,22 +24,19 @@ def validar_factura():
     Espera un JSON con estructura de factura
     """
     try:
+       
         # 1. Verificar que el contenido sea JSON
         if not request.is_json:
-            return jsonify({
-                'success': False,
-                'message': 'Se esperaba JSON',
-                'errors': {'content_type': ['Debe ser application/json']}
-            }), 400
+            return jsonify({'success': False, 'message': 'No viene JSON en la solicitud'}), 400
         
         # 2. Obtener datos del request
         datos = request.get_json()
-        
+        #logger.debug(f"JSON recibido: {datos}")
+        cliente= armar_factura(datos)
         # 3. Validar usando la función principal
-        shema = FacturaSchema()
-        resultado = shema.load(datos)  # Esto validará la estructura general y tipos básicos
+          # Esto validará la estructura general y tipos básicos
         
-        armar_factura(resultado)  # Aquí puedes hacer validaciones más complejas o cálculos adicionales
+          # Aquí puedes hacer validaciones más complejas o cálculos adicionales
         # 4. Responder según resultado
        
         
@@ -54,7 +45,7 @@ def validar_factura():
             'success': True,
             'message': 'Factura válida',
             'timestamp': datetime.now().isoformat(),
-            'data': resultado
+            'data': cliente
         }), 200
         
     except ValidationError as e:
