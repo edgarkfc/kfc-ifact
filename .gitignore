@@ -1,0 +1,13 @@
+# Entorno virtual
+venv/
+__pycache__/
+*.py[cod]
+
+# Configuraciones de IDE
+.vscode/
+.idea/
+
+# Environment variables
+.env
+*.env
+!.env.example

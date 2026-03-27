@@ -153,6 +153,22 @@ class RestauranteSchema(Schema):
     nro_estacion = fields.Int(required=True)   
 
 # ============================================
+# SCHEMA CONFIGURACION IMPRESORA
+# ============================================
+class ConfigImpresoraSchema(Schema):
+    class Meta:
+        unknown = EXCLUDE
+    
+    impresion_qr = fields.Bool(required=True, allow_none=False)
+    impresion_msgqr = fields.Bool(required=True, allow_none=False)
+    impresion_cupon = fields.Bool(required=True, allow_none=False)
+    
+    @post_load
+    def log_config(self, data, **kwargs):
+        logger.debug(f"=== ConfigImpresoraSchema procesado: {data} ===")
+        return data   
+
+# ============================================
 # SCHEMA PRINCIPAL FACTURA
 # ============================================
 class FacturaSchema(Schema):
@@ -160,6 +176,7 @@ class FacturaSchema(Schema):
         unknown = EXCLUDE
 
     restaurante = fields.Nested(RestauranteSchema, required=False)
+    config_impresora = fields.Nested(ConfigImpresoraSchema, required=True)
     cabecera_factura = fields.Nested(CabeceraFacturaSchema, required=True)
     cliente = fields.Nested(ClienteSchema, required=True)
     detalle_factura = fields.List(fields.Nested(DetalleFacturaSchema), required=True)
@@ -167,9 +184,16 @@ class FacturaSchema(Schema):
     
     @pre_load
     def unwrap_factura(self, data, **kwargs):
-        """Extrae el contenido de 'factura' si existe"""
+        """Extrae el contenido de 'factura' si existe"""       
+        logger.debug(f"Tipo de data: {type(data)}")
+        logger.debug(f"Keys en data: {data.keys() if isinstance(data, dict) else 'No es dict'}")
         if isinstance(data, dict) and 'factura' in data:
-            return data['factura']
+            factura_data = data['factura']           
+            logger.debug(f"Keys en factura: {factura_data.keys()}")
+            logger.debug(f"config_impresora en factura: {factura_data.get('config_impresora')}")
+            logger.debug(f"config_impresora type: {type(factura_data.get('config_impresora'))}")
+            return factura_data
+        logger.debug("=== No se encontró campo 'factura' ===")
         return data
     
     @validates_schema
@@ -207,8 +231,12 @@ class FacturaSchema(Schema):
         """
         Separa los datos en categorías para facilitar su procesamiento
         """
+        logger.debug(f"Keys en data: {data.keys()}")
+        logger.debug(f"config_impresora en data: {data.get('config_impresora')}")
+        logger.debug(f"config_impresora type: {type(data.get('config_impresora'))}")
         result = {
             'restaurante': data.get('restaurante'),
+            'config_impresora': data.get('config_impresora'),
             'cabecera': data.get('cabecera_factura'),
             'cliente': data.get('cliente'),
             'detalle': data.get('detalle_factura', []),
@@ -220,4 +248,6 @@ class FacturaSchema(Schema):
                 'fecha': data.get('cabecera_factura', {}).get('cabfact_fechacreacion')
             }
         }
+        logger.debug(f"=== Resultado final keys: {result.keys()} ===")
+        logger.debug(f"Resultado config_impresora: {result.get('config_impresora')}")
         return result

@@ -1,6 +1,10 @@
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from decimal import Decimal, ROUND_HALF_UP
+
+from server.controllers.helpers.polices import validar_impresion_qr, validar_mensaje_qr
+from server.controllers.helpers.algortimoqr import procesar_qr
+
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logger = logging.getLogger('info')
@@ -29,42 +33,42 @@ def cabeceraFacturas(cabeceraFactura: Dict[str, Any]) -> Dict[int, str]:
 
 def _cabecera_con_cliente(cliente: Dict, cabecera_factura: Dict, tiene_delivery: bool) -> Dict[int, str]:
     if tiene_delivery:        
-        return {
-            -6: f"iS* {cliente.get('cliente_nombres', '')[:39]}\n",
-            -5: f"iR* {cliente.get('cliente_documento', '')}\n",
-            -4: f"i03Direccion: {cliente.get('cliente_direccion', '')[:39]}\n",
-            -3: f"i04Telefono: {cliente.get('cliente_telefono', '')}\n",
-            -2: f"i05Transaccion: {cabecera_factura.get('cabfact_id', '')}\n",
-            -1: f"i06Orden Delivery: {cabecera_factura.get('delivery_id', '')}\n",
-        }
+        return [
+            f"iS* {cliente.get('cliente_nombres', '')[:39]}\n",
+            f"iR* {cliente.get('cliente_documento', '')}\n",
+            f"i03Direccion: {cliente.get('cliente_direccion', '')[:39]}\n",
+            f"i04Telefono: {cliente.get('cliente_telefono', '')}\n",
+            f"i05Transaccion: {cabecera_factura.get('cabfact_id', '')}\n",
+            f"i06Orden Delivery: {cabecera_factura.get('delivery_id', '')}\n",
+        ]
     else:        
-        return {            
-            -5: f"iS* {cliente.get('cliente_nombres', '')[:39]}\n",
-            -4: f"iR* {cliente.get('cliente_documento', '')}\n",
-            -3: f"i03Direccion: {cliente.get('cliente_direccion', '')[:39]}\n",
-            -2: f"i04Telefono: {cliente.get('cliente_telefono', '')}\n",
-            -1: f"i05Transaccion: {cabecera_factura.get('cabfact_id', '')}\n",
-        }
+        return [            
+            f"iS* {cliente.get('cliente_nombres', '')[:39]}\n",
+            f"iR* {cliente.get('cliente_documento', '')}\n",
+            f"i03Direccion: {cliente.get('cliente_direccion', '')[:39]}\n",
+            f"i04Telefono: {cliente.get('cliente_telefono', '')}\n",
+            f"i05Transaccion: {cabecera_factura.get('cabfact_id', '')}\n",
+        ]
 # Si no hay datos del cliente, se puede generar una cabecera para consumidor final
 def _cabecera_sin_cliente(cabecera_factura: Dict, tiene_delivery: bool) -> Dict[int, str]:
     """Genera cabecera para consumidor final"""
     if tiene_delivery:        
-        return {
-            -6: "iS* CONSUMIDOR FINAL\n",
-            -5: "iR* 9999999\n",
-            -4: "i03Direccion: AV. PRINCIPAL\n",
-            -3: "i04Telefono: 123456789\n",
-            -2: f"i05Transaccion: {cabecera_factura.get('cfac_id', '')}\n",
-            -1: f"i06Orden Delivery: {cabecera_factura.get('delivery_id', '')}\n",
-        }
+        return [
+            "iS* CONSUMIDOR FINAL\n",
+            "iR* 9999999\n",
+            "i03Direccion: AV. PRINCIPAL\n",
+            "i04Telefono: 123456789\n",
+            f"i05Transaccion: {cabecera_factura.get('cfac_id', '')}\n",
+            f"i06Orden Delivery: {cabecera_factura.get('delivery_id', '')}\n",
+        ]
     else:
-        return {
-            -5: "iS* CONSUMIDOR FINAL\n",
-            -4: "iR* 9999999\n",
-            -3: "i03Direccion: AV. PRINCIPAL\n",
-            -2: "i04Telefono: 123456789\n",
-            -1: f"i05Transaccion: {cabecera_factura.get('cfac_id', '')}\n",
-        }
+        return [
+            "iS* CONSUMIDOR FINAL\n",
+            "iR* 9999999\n",
+            "i03Direccion: AV. PRINCIPAL\n",
+            "i04Telefono: 123456789\n",
+            f"i05Transaccion: {cabecera_factura.get('cfac_id', '')}\n",
+        ]
 
 
 def factura_productos(datos_validados, factura):
@@ -313,47 +317,47 @@ def format_decimal(valor, decimales=2, remove_decimal=False):
 def factura_pagos(factura, json_data):
     """
     Procesa las formas de pago de una factura y las agrega a la lista de factura.
-    
-    Args:
-        factura (list): Lista donde se almacenarán las líneas formateadas
-        json_data (dict): Diccionario con los datos validados de la factura
-    
-    Returns:
-        dict: Diccionario con 'factura' (lista actualizada)
     """
     try:
-        # Asegurar que factura sea una lista
         if factura is None:
             factura = []
         
-        # Obtener datos de cabecera y formas de pago
         cabecera = json_data.get('cabecera', {})
         formas_pago = json_data.get('formas_pago', [])
+        config_impresora = json_data.get('config_impresora', {})  
         
-        igtf = None  # Variable para IGTF (si aplica)
+        igtf = None
         
-        # Verificar descuentos en cabecera (nota: en el JSON los descuentos están en cabecera, no en cada producto)
-        # En PHP verifican dtfac_porcentaje_descuento y dtfac_valor_descuento en cabecera
-        # Pero según la estructura del JSON, estos campos están en cada producto, no en cabecera
-        # Por compatibilidad, verificamos si existen en cabecera
+        # Descuentos
         descuento_porcentaje = cabecera.get('cabfact_porcentaje_descuento', 0)
         descuento_valor = cabecera.get('cabfact_valor_descuento', 0)
+        factura.append("3\n")
+
+        # Llamar a validar_impresion_qr
+        try:
+            impresion_qr = config_impresora.get('impresion_qr', False)
+        except Exception as e:
+            logger.error(f"Error obteniendo impresion_qr: {e}")
+            impresion_qr = False
+
+        impresionQR = validar_impresion_qr(impresion_qr)
+
+        if impresionQR:            
+            datos = procesar_qr()
+            factura.append("y" + datos + "\n") 
         
-        # Procesar descuento por porcentaje en cabecera
         try:
             if descuento_porcentaje and float(descuento_porcentaje) != 0:
                 factura.append(f"p-{int(float(descuento_porcentaje))}00\n")
         except (ValueError, TypeError):
             pass
         
-        # Procesar descuento por monto en cabecera
         try:
             if descuento_valor and float(descuento_valor) != 0:
                 factura.append(f"q-{conversion_descuento_monto(descuento_valor)}\n")
         except (ValueError, TypeError):
             pass
         
-        # Procesar cada forma de pago
         for pago in formas_pago:
             linea_pago = conversion_fpago(igtf, pago)
             factura.append(linea_pago)
@@ -361,7 +365,9 @@ def factura_pagos(factura, json_data):
         return {'factura': factura}
         
     except Exception as e:
-        logger.error(f"{str(e)} fn factura_pagos, cargando las formas de pago factura / helper")
+        print(f"Error en factura_pagos: {e}")
+        import traceback
+        traceback.print_exc()
         return {'factura': factura, 'error': str(e)}
 
 

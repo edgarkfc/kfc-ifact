@@ -2,6 +2,7 @@
 from flask import Blueprint, request, jsonify
 from marshmallow import ValidationError
 from server.controllers.bills_controller import armar_factura 
+from server.config.database import db
 import logging
 from datetime import datetime
 
@@ -24,6 +25,7 @@ def validar_factura():
     Espera un JSON con estructura de factura
     """
     try:
+        
        
         # 1. Verificar que el contenido sea JSON
         if not request.is_json:
