@@ -1,315 +1,170 @@
-# tests/test_routes.py
 import pytest
 import json
+from flask import url_for
 
-def test_health_check(client):
-    """Test básico del endpoint health"""
-    response = client.get('/api/facturas/health')
-    assert response.status_code == 200
-    data = json.loads(response.data)
-    assert data['success'] is True
-    assert 'Servicio de facturas operativo' in data['message']
-
-def test_validar_factura_success(client):
-    """Test de validación exitosa"""
-    factura_test = {
-        "factura": {
-            "restaurante": {
-            "Restaurante": "K010",
-            "rst_id": 9,
-            "impuesto_restaurante": None,
-            "station": 1
-            },
-            "cabecera_factura": {
-            "cfac_id": "K010F000421280",
-            "dtfac_nrofactnotac": None,    
-            "cfac_fechacreacion": "2026-02-24T12:28:51.960",
-            "cfac_subtotal": 15207.1221,
-            "cfac_base_iva": 14156.1075,
-            "cfac_base_cero": 464.4018,
-            "cfac_iva": 2264.98,
-            "cfac_total": 16421.08,
-            "cfac_descuento": 1051.0146,
-            "dtfac_valor_descuento": 1051.01,
-            "dtfac_porcentaje_descuento": 0,
-            "Cabecera_FacturaVarchar9": None,
-            "tasa_conversion": 407.37
-            },
-            "detalle_factura": [
-            {
-                "IDDetalleFactura": "EF8B14E7-9D11-F111-BFC5-004E01AF61AB",
-                "cfac_id": "K010F000421280",
-                "plu_id": 5304,
-                "dtfac_cantidad": 1,
-                "dtfac_precio_unitario": 814.74,
-                "dtfac_iva": 114.064,
-                "dtfac_total": 814.74,
-                "aplicaImpuesto1": 1,
-                "aplicaImpuesto2": 0,
-                "aplicaImpuesto3": 0,
-                "aplicaImpuesto4": 0,
-                "aplicaImpuesto5": 0,
-                "descuento": 0,
-                "dtfac_valor_descuento": None,
-                "dtfac_porcentaje_descuento": None,
-                "dtfac_porcentaje_dsctDiscrecional": 0,
-                "Detalle_FacturaDecimal1": 814.74,
-                "Detalle_FacturaDecimal2": 114.06,
-                "Detalle_FacturaVarchar1": "SUNDAE CHOCOLATE APP",
-                "Detalle_FacturaVarchar2": "5304"
-            },
-            {
-                "IDDetalleFactura": "EE8B14E7-9D11-F111-BFC5-004E01AF61AB",
-                "cfac_id": "K010F000421280",
-                "plu_id": 4479,
-                "dtfac_cantidad": 1,
-                "dtfac_precio_unitario": 14665.32,
-                "dtfac_iva": 2020.555,
-                "dtfac_total": 14665.32,
-                "aplicaImpuesto1": 1,
-                "aplicaImpuesto2": 0,
-                "aplicaImpuesto3": 0,
-                "aplicaImpuesto4": 0,
-                "aplicaImpuesto5": 0,
-                "descuento": 0,
-                "dtfac_valor_descuento": None,
-                "dtfac_porcentaje_descuento": None,
-                "dtfac_porcentaje_dsctDiscrecional": 0,
-                "Detalle_FacturaDecimal1": 14665.32,
-                "Detalle_FacturaDecimal2": 2020.56,
-                "Detalle_FacturaVarchar1": "MEGA FESTIN APP",
-                "Detalle_FacturaVarchar2": "4479"
-            },
-            {
-                "IDDetalleFactura": "EC8B14E7-9D11-F111-BFC5-004E01AF61AB",
-                "cfac_id": "K010F000421280",
-                "plu_id": 1800,
-                "dtfac_cantidad": 1,
-                "dtfac_precio_unitario": 1222.11,
-                "dtfac_iva": 0,
-                "dtfac_total": 1222.11,
-                "aplicaImpuesto1": 1,
-                "aplicaImpuesto2": 0,
-                "aplicaImpuesto3": 0,
-                "aplicaImpuesto4": 0,
-                "aplicaImpuesto5": 0,
-                "descuento": 1051.01,
-                "dtfac_valor_descuento": None,
-                "dtfac_porcentaje_descuento": None,
-                "dtfac_porcentaje_dsctDiscrecional": 0,
-                "Detalle_FacturaDecimal1": 1222.11,
-                "Detalle_FacturaDecimal2": 0,
-                "Detalle_FacturaVarchar1": "PAPA FRITA GRANDE",
-                "Detalle_FacturaVarchar2": "1800"
-            }
-            ],
-            "cliente": {
-            "IDCliente": "9DFD2D2B-B30A-4C6E-9593-86BA5DC3C40D",
-            "cli_documento": "15207091",
-            "ciu_id": "1",
-            "cli_nombres": "Edgar Castro",
-            "cli_apellidos": None,
-            "IDTipoDocumento": "050B9503-85CF-E511-80C6-000D3A3261F3",
-            "cli_telefono": "222222",
-            "cli_direccion": None,
-            "cli_email": "consumidor.final@kfc.com.ec"
-            },
-            "formas_pago": [
-            {
-                "IDFormapagoFactura": "FD3ADFD0-6DD9-4D67-8E64-FDF78CB46E83",
-                "IDFormapago": "29C65AA6-DC52-E811-80CB-000D3A0581B1",
-                "cfac_id": "K010F000421280",
-                "fpf_total_pagar": 15947.4555,
-                "Formapago_FacturaVarchar4": "20"
-            }
-            ]
-        }
-    }
+class TestRoutes:
+    """Tests para los endpoints de la API"""
     
-    response = client.post(
+    def test_health_check(self, client):
+        """Test del endpoint health check"""
+        response = client.get('/api/facturas/health')
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['success'] is True
+        assert data['message'] == 'Servicio de facturas operativo'
+        assert 'version' in data
+    
+    def test_validar_factura_valida(self, client, factura_valida_data):
+        """Test validación de factura válida"""
+        response = client.post(
+            '/api/facturas/validar',
+            json=factura_valida_data,
+            content_type='application/json'
+        )
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['success'] is True
+        assert data['message'] == 'Factura válida'
+        assert 'data' in data
+        assert data['data']['validacion'] == 'exitosa'
+    
+    def test_validar_factura_invalida(self, client, factura_invalida_data):
+        """Test validación de factura inválida"""
+        response = client.post(
+            '/api/facturas/validar',
+            json=factura_invalida_data,
+            content_type='application/json'
+        )
+        
+        assert response.status_code == 422
+        data = response.get_json()
+        assert data['success'] is False
+        assert data['message'] == 'Error de validación en la factura'
+        assert 'errors' in data
+    
+    def test_validar_factura_diferencia_totales(self, client, factura_diferencia_totales_data):
+        """Test factura con diferencia en totales"""
+        response = client.post(
+            '/api/facturas/validar',
+            json=factura_diferencia_totales_data,
+            content_type='application/json'
+        )
+        
+        assert response.status_code == 422
+        data = response.get_json()
+        assert data['success'] is False
+        assert 'errors' in data
+        assert 'cabecera_factura' in data['errors']
+    
+    def test_validar_factura_sin_json(self, client):
+        """Test envío sin JSON"""
+        response = client.post(
+            '/api/facturas/validar',
+            data="texto plano",
+            content_type='text/plain'
+        )
+        
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data['success'] is False
+        assert 'JSON' in data['message']
+    
+    def test_validar_factura_vacia(self, client):
+        """Test envío de JSON vacío"""
+        response = client.post(
+            '/api/facturas/validar',
+            json={},
+            content_type='application/json'
+        )
+        
+        assert response.status_code == 422
+        data = response.get_json()
+        assert data['success'] is False
+        assert 'errors' in data
+    
+    def test_procesar_factura_valida(self, client, factura_valida_data, mock_print_message):
+        """Test procesamiento de factura válida"""
+        response = client.post(
+            '/api/facturas/procesar',
+            json=factura_valida_data,
+            content_type='application/json'
+        )
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['success'] is True
+        assert data['message'] == 'Factura procesada exitosamente'
+        assert 'data' in data
+        assert 'factura_unificada' in data['data']
+        assert 'metadata' in data['data']
+    
+    def test_procesar_factura_invalida(self, client, factura_invalida_data):
+        """Test procesamiento de factura inválida"""
+        response = client.post(
+            '/api/facturas/procesar',
+            json=factura_invalida_data,
+            content_type='application/json'
+        )
+        
+        assert response.status_code == 422
+        data = response.get_json()
+        assert data['success'] is False
+        assert data['message'] == 'Error de validación'
+        assert 'errors' in data
+    
+    def test_armar_factura_valida(self, client, factura_valida_data, mock_print_message):
+        """Test armar factura válida (compatibilidad)"""
+        response = client.post(
+            '/api/facturas/armar',
+            json=factura_valida_data,
+            content_type='application/json'
+        )
+        
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data['success'] is True
+        assert data['message'] == 'Factura armada exitosamente'
+        assert 'data' in data
+    
+    def test_armar_factura_invalida(self, client, factura_invalida_data):
+        """Test armar factura inválida (compatibilidad)"""
+        response = client.post(
+            '/api/facturas/armar',
+            json=factura_invalida_data,
+            content_type='application/json'
+        )
+        
+        assert response.status_code == 422
+        data = response.get_json()
+        assert data['success'] is False
+        assert 'error' in data or 'details' in data
+    
+    @pytest.mark.parametrize("endpoint", [
         '/api/facturas/validar',
-        json=factura_test,
-        content_type='application/json'
-    )
+        '/api/facturas/procesar',
+        '/api/facturas/armar'
+    ])
+    def test_metodos_no_permitidos(self, client, endpoint):
+        """Test métodos HTTP no permitidos"""
+        response = client.get(endpoint)
+        assert response.status_code == 405
+        
+        response = client.put(endpoint)
+        assert response.status_code == 405
+        
+        response = client.delete(endpoint)
+        assert response.status_code == 405
     
-    # Por ahora, verificamos que la respuesta sea 200 o 422
-    # Si es 422, mostramos los errores para depurar
-    if response.status_code == 422:
-        data = json.loads(response.data)
-        print(f"Errores de validación: {data.get('errors', {})}")
-    
-    assert response.status_code in [200, 422]
-
-def test_validar_factura_invalid_json(client):
-    """Test con JSON inválido"""
-    response = client.post(
-        '/api/facturas/validar',
-        data="esto no es json",
-        content_type='text/plain'
-    )
-    assert response.status_code == 400
-    data = json.loads(response.data)
-    assert data['success'] is False
-
-def test_validar_factura_missing_data(client):
-    """Test con datos incompletos"""
-    factura_incompleta = {
-        "cliente": {}  # Cliente vacío
-    }
-    
-    response = client.post(
-        '/api/facturas/validar',
-        json=factura_incompleta
-    )
-    assert response.status_code == 422
-    data = json.loads(response.data)
-    assert data['success'] is False
-
-def test_validar_decimales(client):
-    """Probar validación de decimales en fpf_total_pagar"""
-    
-    # Caso 1: 3 decimales (debería funcionar)
-    factura_3_decimales = {
-        "factura": {
-            "restaurante": {
-            "Restaurante": "K010",
-            "rst_id": 9,
-            "impuesto_restaurante": None,
-            "station": 1
-            },
-            "cabecera_factura": {
-            "cfac_id": "K010F000421280",
-            "dtfac_nrofactnotac": None,    
-            "cfac_fechacreacion": "2026-02-24T12:28:51.960",
-            "cfac_subtotal": 15207.1221,
-            "cfac_base_iva": 14156.1075,
-            "cfac_base_cero": 464.4018,
-            "cfac_iva": 2264.98,
-            "cfac_total": 16421.08,
-            "cfac_descuento": 1051.0146,
-            "dtfac_valor_descuento": 1051.01,
-            "dtfac_porcentaje_descuento": 0,
-            "Cabecera_FacturaVarchar9": None,
-            "tasa_conversion": 407.37
-            },
-            "detalle_factura": [
-            {
-            "IDDetalleFactura": "EF8B14E7-9D11-F111-BFC5-004E01AF61AB",
-            "cfac_id": "K010F000421280",
-            "plu_id": 5304,
-            "dtfac_cantidad": 1,
-            "dtfac_precio_unitario": 814.74,
-            "dtfac_iva": 114.064,
-            "dtfac_total": 814.74,
-            "aplicaImpuesto1": 1,
-            "aplicaImpuesto2": 0,
-            "aplicaImpuesto3": 0,
-            "aplicaImpuesto4": 0,
-            "aplicaImpuesto5": 0,
-            "descuento": 0,
-            "dtfac_valor_descuento": None,
-            "dtfac_porcentaje_descuento": None,
-            "dtfac_porcentaje_dsctDiscrecional": 0,
-            "Detalle_FacturaDecimal1": 814.74,
-            "Detalle_FacturaDecimal2": 114.06,
-            "Detalle_FacturaVarchar1": "SUNDAE CHOCOLATE APP",
-            "Detalle_FacturaVarchar2": "5304"
-            },
-            {
-                "IDDetalleFactura": "EE8B14E7-9D11-F111-BFC5-004E01AF61AB",
-                "cfac_id": "K010F000421280",
-                "plu_id": 4479,
-                "dtfac_cantidad": 1,
-                "dtfac_precio_unitario": 14665.32,
-                "dtfac_iva": 2020.555,
-                "dtfac_total": 14665.32,
-                "aplicaImpuesto1": 1,
-                "aplicaImpuesto2": 0,
-                "aplicaImpuesto3": 0,
-                "aplicaImpuesto4": 0,
-                "aplicaImpuesto5": 0,
-                "descuento": 0,
-                "dtfac_valor_descuento": None,
-                "dtfac_porcentaje_descuento": None,
-                "dtfac_porcentaje_dsctDiscrecional": 0,
-                "Detalle_FacturaDecimal1": 14665.32,
-                "Detalle_FacturaDecimal2": 2020.56,
-                "Detalle_FacturaVarchar1": "MEGA FESTIN APP",
-                "Detalle_FacturaVarchar2": "4479"
-            },
-            {
-                "IDDetalleFactura": "EC8B14E7-9D11-F111-BFC5-004E01AF61AB",
-                "cfac_id": "K010F000421280",
-                "plu_id": 1800,
-                "dtfac_cantidad": 1,
-                "dtfac_precio_unitario": 1222.11,
-                "dtfac_iva": 0,
-                "dtfac_total": 1222.11,
-                "aplicaImpuesto1": 1,
-                "aplicaImpuesto2": 0,
-                "aplicaImpuesto3": 0,
-                "aplicaImpuesto4": 0,
-                "aplicaImpuesto5": 0,
-                "descuento": 1051.01,
-                "dtfac_valor_descuento": None,
-                "dtfac_porcentaje_descuento": None,
-                "dtfac_porcentaje_dsctDiscrecional": 0,
-                "Detalle_FacturaDecimal1": 1222.11,
-                "Detalle_FacturaDecimal2": 0,
-                "Detalle_FacturaVarchar1": "PAPA FRITA GRANDE",
-                "Detalle_FacturaVarchar2": "1800"
-            }
-            ],
-            "cliente": {
-            "IDCliente": "9DFD2D2B-B30A-4C6E-9593-86BA5DC3C40D",
-            "cli_documento": "15207091",
-            "ciu_id": "1",
-            "cli_nombres": "Edgar Castro",
-            "cli_apellidos": None,
-            "IDTipoDocumento": "050B9503-85CF-E511-80C6-000D3A3261F3",
-            "cli_telefono": "222222",
-            "cli_direccion": "null",
-            "cli_email": "consumidor.final@kfc.com.ec"
-            },
-            "formas_pago": [
-            {
-                "IDFormapagoFactura": "FD3ADFD0-6DD9-4D67-8E64-FDF78CB46E83",
-                "IDFormapago": "29C65AA6-DC52-E811-80CB-000D3A0581B1",
-                "cfac_id": "K010F000421280",
-                "fpf_total_pagar": 16421.08,
-                "Formapago_FacturaVarchar4": "05"
-            }
-            ]
-        }
-        }
-    
-    response = client.post('/api/facturas/validar', json=factura_3_decimales)
-    assert response.status_code == 200
-    
-    # Caso 2: 4 decimales (debería fallar)
-    factura_4_decimales = {
-        "cliente": {
-            "cli_documento": "12345678",
-            "cli_nombres": "Juan Pérez",
-            "cli_telefono": "77712345",
-            "cli_direccion": "Av. Principal #123"
-        },
-        "detalle_factura": [
-            {
-                "producto": "Producto 1",
-                "cantidad": 2,
-                "precio": 100.50
-            }
-        ],
-        "formas_pago": [
-            {
-                "fpf_total_pagar": 15947.4555,  # 4 decimales
-                "Formapago_FacturaVarchar4": "01"
-            }
-        ]
-    }
-    
-    response = client.post('/api/facturas/validar', json=factura_4_decimales)
-    assert response.status_code == 422
-    data = json.loads(response.data)
-    assert "decimales" in str(data['errors']).lower()
+    def test_content_type_incorrecto(self, client):
+        """Test content-type incorrecto"""
+        response = client.post(
+            '/api/facturas/validar',
+            headers={'Content-Type': 'application/xml'},
+            data='<xml></xml>'
+        )
+        
+        assert response.status_code == 400
+        data = response.get_json()
+        assert data['success'] is False

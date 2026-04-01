@@ -1,6 +1,7 @@
 # database/print_messages_repository.py
 import logging
 from typing import Dict, Any, List, Optional
+
 from server.config.database import db
 
 logger = logging.getLogger(__name__)
@@ -24,9 +25,9 @@ class PrintMessagesRepository:
         """
         try:
             query = """
-                SELECT [id], [code], [content], [status], [order]
+                SELECT [id], [code], [content], [is_active], [order]
                 FROM [iFact].[dbo].[print_messages]
-                WHERE [status] = 'ACTIVO'
+                WHERE [is_active] = 1
                 ORDER BY [order] ASC
             """
             
@@ -78,7 +79,7 @@ class PrintMessagesRepository:
         """
         try:
             query = """
-                SELECT [id], [code], [content], [status], [order]
+                SELECT [id], [code], [content], [is_active], [order]
                 FROM [iFact].[dbo].[print_messages]
                 WHERE [id] = ?
             """
@@ -108,7 +109,7 @@ class PrintMessagesRepository:
             query = """
                 SELECT COUNT(*) as total
                 FROM [iFact].[dbo].[print_messages]
-                WHERE [status] = 'ACTIVO'
+                WHERE [is_active] = 1
             """
             
             results = self.db.execute_query(query, fetch=True)
@@ -121,14 +122,14 @@ class PrintMessagesRepository:
             logger.error(f"Error al contar mensajes activos: {e}")
             return 0
     
-    def insert_message(self, code: str, content: str, status: str = 'ACTIVO', order: int = 0) -> bool:
+    def insert_message(self, code: str, content: str, is_active: int = 1, order: int = 0) -> bool:
         """
         Inserta un nuevo mensaje en la tabla print_messages
         
         Args:
             code: Código del mensaje
             content: Contenido del mensaje
-            status: Estado ('ACTIVO' o 'INACTIVO')
+            is_active: Estado (1 para activo, 0 para inactivo)
             order: Orden de impresión
         
         Returns:
@@ -137,10 +138,10 @@ class PrintMessagesRepository:
         try:
             query = """
                 INSERT INTO [iFact].[dbo].[print_messages] 
-                ([code], [content], [status], [order])
+                ([code], [content], [is_active], [order])
                 VALUES (?, ?, ?, ?)
             """
-            params = (code, content, status, order)
+            params = (code, content, is_active, order)
             
             self.db.execute_query(query, params)
             logger.info(f"Mensaje insertado: code={code}, content={content}")
@@ -156,7 +157,7 @@ class PrintMessagesRepository:
         
         Args:
             message_id: ID del mensaje a actualizar
-            **kwargs: Campos a actualizar (code, content, status, order)
+            **kwargs: Campos a actualizar (code, content, is_active, order)
         
         Returns:
             bool: True si se actualizó correctamente
@@ -166,7 +167,7 @@ class PrintMessagesRepository:
             set_clause = []
             params = []
             
-            allowed_fields = ['code', 'content', 'status', 'order']
+            allowed_fields = ['code', 'content', 'is_active', 'order']
             
             for field in allowed_fields:
                 if field in kwargs and kwargs[field] is not None:
@@ -219,18 +220,18 @@ class PrintMessagesRepository:
             logger.error(f"Error al eliminar mensaje con ID {message_id}: {e}")
             return False
     
-    def set_message_status(self, message_id: int, status: str) -> bool:
+    def set_message_status(self, message_id: int, is_active: int) -> bool:
         """
         Cambia el estado de un mensaje
         
         Args:
             message_id: ID del mensaje
-            status: Nuevo estado ('ACTIVO' o 'INACTIVO')
+            is_active: Nuevo estado (1 para activo, 0 para inactivo)
         
         Returns:
             bool: True si se actualizó correctamente
         """
-        return self.update_message(message_id, status=status)
+        return self.update_message(message_id, is_active=is_active)
     
     def reorder_messages(self, message_ids: List[int]) -> bool:
         """
