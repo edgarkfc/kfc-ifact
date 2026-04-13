@@ -3,7 +3,7 @@
 Pruebas para FacturaService
 """
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
 from server.services.factura_service import FacturaService
 
 

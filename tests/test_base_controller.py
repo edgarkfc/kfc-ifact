@@ -3,7 +3,7 @@
 Pruebas para BaseController
 """
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 from marshmallow import ValidationError
 
 from server.controllers.base_controller import DocumentoBaseController

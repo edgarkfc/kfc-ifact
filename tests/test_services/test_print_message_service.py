@@ -3,7 +3,7 @@
 Pruebas para PrintMessageService
 """
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from server.services.print_message_service import PrintMessageService
 
 

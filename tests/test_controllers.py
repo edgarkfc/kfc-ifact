@@ -3,7 +3,7 @@
 Pruebas para controladores
 """
 import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch
 
 from server.controllers.bills_controller import (
     procesar_factura_controller  # Solo procesar existe ahora

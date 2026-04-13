@@ -4,7 +4,6 @@ Servicio de generación de códigos QR para facturación electrónica
 Formato de trama: y + número_generado (ejemplo: y1578408916)
 """
 import logging
-import base64
 from typing import Dict, Any, Optional
 from io import BytesIO
 from datetime import datetime

@@ -3,10 +3,9 @@
 Configuración global de pytest y fixtures reutilizables
 """
 import sys
-import os
 import pytest
-import json
 from pathlib import Path
+from unittest.mock import patch, MagicMock
 
 from sqlalchemy import Null
 

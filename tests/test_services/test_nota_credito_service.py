@@ -3,7 +3,6 @@
 Pruebas para NotaCreditoService
 """
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 from server.services.nota_credito_service import NotaCreditoService
 
 
