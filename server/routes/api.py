@@ -1,13 +1,18 @@
-# routes/api.py
+# server/routes/api.py
 from flask import Blueprint, request, jsonify
-from server.controllers.bills_controller import (
-    validar_factura_controller,
-    procesar_factura_controller,
-    armar_factura_controller,
-    health_check_controller
+from server.controllers.bills_controller import (    
+    procesar_factura_controller,    
+)
+from server.controllers.notas_credito_module import (    
+    procesar_nota_credito_controller,    
 )
 
+# Blueprint para facturas
 facturas_bp = Blueprint('facturas', __name__, url_prefix='/api/facturas')
+
+# Blueprint para notas de crédito
+notas_credito_bp = Blueprint('notas_credito', __name__, url_prefix='/api/notas-credito')
+
 
 def handle_request(controller_func):
     """Helper para manejar solicitudes JSON de manera uniforme"""
@@ -18,19 +23,22 @@ def handle_request(controller_func):
     respuesta, error, status_code = controller_func(datos)
     return jsonify(respuesta), status_code
 
-@facturas_bp.route('/validar', methods=['POST'])
-def validar_factura_endpoint():
-    return handle_request(validar_factura_controller)
+
+# ============================================
+# RUTAS PARA FACTURAS - SOLO PROCESAR
+# ============================================
 
 @facturas_bp.route('/procesar', methods=['POST'])
 def procesar_factura_endpoint():
     return handle_request(procesar_factura_controller)
 
-@facturas_bp.route('/armar', methods=['POST'])
-def armar_factura_endpoint():
-    return handle_request(armar_factura_controller)
 
-@facturas_bp.route('/health', methods=['GET'])
-def health_check():
-    respuesta, status_code = health_check_controller()
-    return jsonify(respuesta), status_code
+
+# ============================================
+# RUTAS PARA NOTAS DE CRÉDITO - SOLO PROCESAR
+# ============================================
+
+@notas_credito_bp.route('/procesar', methods=['POST'])
+def procesar_nota_credito_endpoint():
+    return handle_request(procesar_nota_credito_controller)
+

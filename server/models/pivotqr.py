@@ -1,27 +1,32 @@
-from dataclasses import dataclass, asdict
-from typing import Optional
-from datetime import datetime
 
-@dataclass
-class PivotQR:
-    """Modelo PivotQR - Equivalente al modelo de Laravel"""
-    id: Optional[int] = None
-    nropases: Optional[str] = None
-    nrotarjetas: Optional[int] = None
-    hora: Optional[int] = None
-    minutos: Optional[int] = None
-    status: Optional[str] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+"""
+Modelo de PivotQR para parámetros de generación QR
+"""
+from server.models.base import BaseModel, db
+
+
+class PivotQR(BaseModel):
+    """Modelo para parámetros de generación de QR"""
+    __tablename__ = 'pivot_qrs'
     
-    def to_dict(self):
-        """Convierte el modelo a diccionario (como toArray() en Laravel)"""
-        return asdict(self)
-    
-    @classmethod
-    def from_dict(cls, data: dict):
-        """Crea modelo desde diccionario (como fill() en Laravel)"""
-        return cls(**data)
+    num_pases = db.Column(db.Integer, default=4)
+    num_tarjetas = db.Column(db.Integer, default=300)
+    horas = db.Column(db.Integer, default=1)
+    minutos = db.Column(db.Integer, default=0)
+    status = db.Column(db.String(20), default='ACTIVO')
+    is_active = db.Column(db.Boolean, default=True)
     
     def __repr__(self):
-        return f"<PivotQR(id={self.id}, status={self.status})>"
+        return f"<PivotQR pases={self.num_pases}, tarjetas={self.num_tarjetas}>"
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'nropases': self.num_pases,
+            'nrotarjetas': self.num_tarjetas,
+            'hora': self.horas,
+            'minutos': self.minutos,
+            'status': self.status,
+            'is_active': self.is_active,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }

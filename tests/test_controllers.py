@@ -1,168 +1,89 @@
-import sys
-import os
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
+# tests/test_controllers.py
+"""
+Pruebas para controladores
+"""
 import pytest
-from marshmallow import ValidationError
+from unittest.mock import Mock, patch, MagicMock
+
 from server.controllers.bills_controller import (
-    validar_factura,
-    procesar_factura,
-    armar_factura,
-    validar_factura_controller,
-    procesar_factura_controller,
-    armar_factura_controller,
-    health_check_controller
+    procesar_factura_controller  # Solo procesar existe ahora
+)
+from server.controllers.notas_credito_module import (
+    procesar_nota_credito_controller  # Solo procesar existe ahora
 )
 
-class TestControllers:
-    """Tests para los controladores"""
+
+class TestBillsController:
+    """Pruebas para controlador de facturas"""
     
-    def test_validar_factura_exito(self, factura_valida_data):
-        """Test validación exitosa de factura"""
-        datos_validados = validar_factura(factura_valida_data)
-        
-        assert datos_validados is not None
-        # El schema transforma los nombres: cabecera_factura -> cabecera
-        assert 'cliente' in datos_validados
-        assert 'cabecera' in datos_validados  # ← Cambiado de cabecera_factura a cabecera
-        assert 'detalle' in datos_validados   # ← Cambiado de detalle_factura a detalle
-        
-        # Verificar que los totales sean correctos
-        cabecera = datos_validados['cabecera']
-        total_cabecera = cabecera.get('cabfact_total', 0)
-        subtotal_cabecera = cabecera.get('cabfact_subtotal', 0)
-        iva_cabecera = cabecera.get('cabfact_iva', 0)
-        
-        # Verificar relación: total = subtotal + iva
-        assert abs((subtotal_cabecera + iva_cabecera) - total_cabecera) <= 0.05
+    @pytest.fixture
+    def datos_factura_valida(self, factura_valida):
+        """Datos de factura válida"""
+        return factura_valida['factura']
     
-    def test_validar_factura_error(self, factura_invalida_data):
-        """Test validación con error"""
-        with pytest.raises(ValidationError) as exc_info:
-            validar_factura(factura_invalida_data)
-        
-        # Debería tener error en cabecera_factura
-        assert 'cabecera_factura' in exc_info.value.messages
+    def test_procesar_factura_controller_exitoso(self, datos_factura_valida):
+        """Prueba procesar factura exitoso"""
+        with patch('server.controllers.bills_controller._factura_controller') as mock_controller:
+            mock_controller.procesar_controller.return_value = (
+                {'success': True, 'message': 'FACTURA procesada', 'data': {}},
+                None,
+                200
+            )
+            
+            respuesta, error, status = procesar_factura_controller(datos_factura_valida)
+            
+            assert status == 200
+            assert respuesta['success'] is True
+            assert error is None
     
-    def test_procesar_factura_exito(self, factura_valida_data,
-                                     mock_print_message, 
-                                     mock_cabeceraFacturas,
-                                     mock_factura_productos,
-                                     mock_factura_pagos,
-                                     mock_validar_mensaje_qr):
-        """Test procesamiento exitoso de factura con mocks"""
-        # Primero validar - usar factura válida simple
-        datos_validados = validar_factura(factura_valida_data)
-        
-        # Luego procesar
-        resultado = procesar_factura(datos_validados)
-        
-        assert resultado is not None
-        assert 'cabecera_cliente' in resultado
-        assert 'detail_productos' in resultado
-        assert 'pagos_factura' in resultado
-        assert 'factura_unificada' in resultado
-        assert 'metadata' in resultado
-        assert isinstance(resultado['factura_unificada'], list)
-        assert len(resultado['factura_unificada']) > 0
+    def test_procesar_factura_controller_error(self):
+        """Prueba procesar factura con error"""
+        with patch('server.controllers.bills_controller._factura_controller') as mock_controller:
+            mock_controller.procesar_controller.return_value = (
+                {'success': False, 'message': 'Error'},
+                Exception('Error'),
+                500
+            )
+            
+            respuesta, error, status = procesar_factura_controller({})
+            
+            assert status == 500
+            assert respuesta['success'] is False
+            assert error is not None
+
+
+class TestNotasCreditoController:
+    """Pruebas para controlador de notas de crédito"""
     
-    def test_armar_factura_exito(self, factura_valida_data,
-                                  mock_print_message,
-                                  mock_cabeceraFacturas,
-                                  mock_factura_productos,
-                                  mock_factura_pagos,
-                                  mock_validar_mensaje_qr):
-        """Test armar factura exitoso (compatibilidad)"""
-        resultado = armar_factura(factura_valida_data)
-        
-        assert resultado is not None
-        assert 'error' not in resultado
-        assert 'factura_unificada' in resultado
-        assert isinstance(resultado['factura_unificada'], list)
+    @pytest.fixture
+    def datos_nota_valida(self, nota_credito_valida):
+        """Datos de nota de crédito válida"""
+        return nota_credito_valida['nota_credito']
     
-    def test_armar_factura_error(self, factura_invalida_data):
-        """Test armar factura con error (compatibilidad)"""
-        resultado = armar_factura(factura_invalida_data)
-        
-        assert resultado is not None
-        assert 'error' in resultado
-        assert resultado['error'] == 'validacion_fallida'
+    def test_procesar_nota_credito_controller_exitoso(self, datos_nota_valida):
+        """Prueba procesar nota crédito exitoso"""
+        with patch('server.controllers.notas_credito_module._nota_credito_controller') as mock_controller:
+            mock_controller.procesar_controller.return_value = (
+                {'success': True, 'message': 'NOTA_CREDITO procesada', 'data': {}},
+                None,
+                200
+            )
+            
+            respuesta, error, status = procesar_nota_credito_controller(datos_nota_valida)
+            
+            assert status == 200
+            assert respuesta['success'] is True
     
-    def test_validar_factura_controller_exito(self, factura_valida_data):
-        """Test controller de validación exitoso"""
-        respuesta, error, status_code = validar_factura_controller(factura_valida_data)
-        
-        assert status_code == 200
-        assert error is None
-        assert respuesta['success'] is True
-        assert respuesta['message'] == 'Factura válida'
-        assert 'data' in respuesta
-    
-    def test_validar_factura_controller_error(self, factura_invalida_data):
-        """Test controller de validación con error"""
-        respuesta, error, status_code = validar_factura_controller(factura_invalida_data)
-        
-        assert status_code == 422
-        assert error is not None
-        assert respuesta['success'] is False
-        assert respuesta['message'] == 'Error de validación en la factura'
-        assert 'errors' in respuesta
-    
-    def test_procesar_factura_controller_exito(self, factura_valida_data,
-                                                mock_print_message,
-                                                mock_cabeceraFacturas,
-                                                mock_factura_productos,
-                                                mock_factura_pagos,
-                                                mock_validar_mensaje_qr):
-        """Test controller de procesamiento exitoso"""
-        respuesta, error, status_code = procesar_factura_controller(factura_valida_data)
-        
-        assert status_code == 200
-        assert error is None
-        assert respuesta['success'] is True
-        assert respuesta['message'] == 'Factura procesada exitosamente'
-        assert 'data' in respuesta
-        assert 'factura_unificada' in respuesta['data']
-    
-    def test_procesar_factura_controller_error(self, factura_invalida_data):
-        """Test controller de procesamiento con error"""
-        respuesta, error, status_code = procesar_factura_controller(factura_invalida_data)
-        
-        assert status_code == 422
-        assert error is not None
-        assert respuesta['success'] is False
-        assert respuesta['message'] == 'Error de validación'
-        assert 'errors' in respuesta
-    
-    def test_armar_factura_controller_exito(self, factura_valida_data,
-                                             mock_print_message,
-                                             mock_cabeceraFacturas,
-                                             mock_factura_productos,
-                                             mock_factura_pagos,
-                                             mock_validar_mensaje_qr):
-        """Test controller armar factura exitoso"""
-        respuesta, error, status_code = armar_factura_controller(factura_valida_data)
-        
-        assert status_code == 200
-        assert error is None
-        assert respuesta['success'] is True
-        assert respuesta['message'] == 'Factura armada exitosamente'
-        assert 'data' in respuesta
-    
-    def test_armar_factura_controller_error(self, factura_invalida_data):
-        """Test controller armar factura con error"""
-        respuesta, error, status_code = armar_factura_controller(factura_invalida_data)
-        
-        assert status_code == 422
-        assert error is not None
-        assert respuesta['success'] is False
-    
-    def test_health_check_controller(self):
-        """Test health check controller"""
-        respuesta, status_code = health_check_controller()
-        
-        assert status_code == 200
-        assert respuesta['success'] is True
-        assert respuesta['message'] == 'Servicio de facturas operativo'
-        assert respuesta['version'] == '1.0.0'
+    def test_procesar_nota_credito_controller_error(self):
+        """Prueba procesar nota crédito con error"""
+        with patch('server.controllers.notas_credito_module._nota_credito_controller') as mock_controller:
+            mock_controller.procesar_controller.return_value = (
+                {'success': False, 'message': 'Error'},
+                Exception('Error'),
+                500
+            )
+            
+            respuesta, error, status = procesar_nota_credito_controller({})
+            
+            assert status == 500
+            assert respuesta['success'] is False

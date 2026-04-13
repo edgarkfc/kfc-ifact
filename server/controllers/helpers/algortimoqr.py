@@ -1,3 +1,6 @@
+# server/controllers/helpers/algortimoqr.py
+from doctest import debug
+
 from server.repositories.pivotqrs_repository import PivotQRSRepository
 from datetime import datetime, timedelta
 import random

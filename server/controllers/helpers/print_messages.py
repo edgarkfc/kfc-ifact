@@ -1,4 +1,4 @@
-# helpers/print_messages_helper.py
+# server/controllers/helpers/print_messages.py
 import logging
 from typing import List, Dict, Any
 from server.repositories.print_messages_repository import PrintMessagesRepository
@@ -26,7 +26,7 @@ def print_message(factura: List[str]) -> Dict[str, List[str]]:
         # Agregar cada mensaje a la factura con el formato para impresora fiscal
         for message in messages:
             # Formato para la impresora fiscal: código + espacio + contenido + salto de línea
-            line = f"{message.get('code', '')} {message.get('content', '')}\n"
+            line = f"{message.get('code', '')} {message.get('content', '')} \n"
             factura.append(line)
         
         logger.info(f"Se agregaron {len(messages)} mensajes a la factura")

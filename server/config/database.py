@@ -1,3 +1,4 @@
+#server/config/database.py
 import os
 import pyodbc
 import logging
@@ -201,5 +202,9 @@ class DatabaseConnection:
         self.close()
 
 
-# Instancia global para reutilizar
+# Instancias globales para fácil acceso
 db = DatabaseConnection()
+db_config = DatabaseConfig()  # ← Agrega esta línea
+
+# Opcional: Configuración por defecto
+default_config = db_config

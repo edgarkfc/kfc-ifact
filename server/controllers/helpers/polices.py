@@ -1,3 +1,4 @@
+# server/controllers/helpers/polices.py
 def validar_impresion_qr(impresion_qr):
     """
     Valida si la impresión QR está habilitada
