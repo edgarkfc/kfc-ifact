@@ -7,7 +7,8 @@ from typing import Dict, Any, List, Optional
 from server.services.impresion_service import ImpresionService
 from server.services.validacion_service import ValidacionService
 from server.services.qr_service import QRService
-from server.controllers.helpers.print_messages import print_message  # ← Importar helper mensajes
+from server.controllers.helpers.print_messages import print_message
+from server.services.impresion_fiscal_service import ImpresoraFiscalService
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,8 @@ class FacturaService:
         self.impresion_service = ImpresionService()
         self.validacion_service = ValidacionService()
         self.qr_service = QRService()
-    
+        self.impresora_fiscal = ImpresoraFiscalService()
+
     def procesar_factura(self, datos_validados: Dict[str, Any]) -> Dict[str, Any]:
         """
         Procesa una factura validada y genera las líneas para impresión
@@ -83,6 +85,10 @@ class FacturaService:
                     "iva": cabecera.get('cabfact_iva', 0)
                 }
             }
+
+            if self.impresora_fiscal.conectar():
+                self.impresora_fiscal.imprimir_factura(resultado['factura_unificada'])
+                self.impresora_fiscal.desconectar()
             
             logger.info("✅ Factura procesada exitosamente")
             return resultado

@@ -7,7 +7,6 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from sqlalchemy import Null
 
 # Agregar el directorio del proyecto al path
 sys.path.insert(0, str(Path(__file__).parent.parent))
